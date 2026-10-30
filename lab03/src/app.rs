@@ -1,0 +1,128 @@
+use AppError::*;
+use std::io;
+
+// P5 application error
+pub enum AppError {
+    NotSigned,
+    AlreadySigned,
+    WrongData,
+    TerminalError,
+    CriticalError,
+}
+
+// P5 App functions
+pub fn app_error_management(er: AppError, username: &mut String, pass: &mut String) {
+    match er {
+        AppError::NotSigned => {
+            println!("Not signed in. Redirecting to sign in...");
+            match sign_in(username, pass) {
+                Ok(_) => println!("Successfully signed in!"),
+                Err(new_err) => app_error_management(new_err, username, pass),
+            }
+        }
+        AppError::AlreadySigned => {
+            println!("Already signed in. Redirecting to log in...");
+            match log_in(username.clone(), pass.clone()) {
+                Ok(_) => println!("Successfully logged in!"),
+                Err(new_err) => app_error_management(new_err, username, pass),
+            }
+        }
+        WrongData => println!("Username or password is wrong"),
+        TerminalError => println!("Terminal Error"),
+        CriticalError => panic!(),
+    }
+}
+
+pub fn connection_options() -> Option<char> {
+    let mut input = String::new();
+    match io::stdin().read_line(&mut input) {
+        Ok(_) => match input.trim() {
+            "l" | "L" => Some('l'),
+            "s" | "S" => Some('s'),
+            _ => None,
+        },
+        Err(error) => {
+            println!("Terminal error: {}", error);
+            None
+        }
+    }
+}
+
+pub fn log_in(username: String, pass: String) -> Result<(), AppError> {
+    if username.is_empty() || pass.is_empty() {
+        Err(NotSigned)
+    } else {
+        println!("---Log in--- ");
+        let mut input_username: String = String::new();
+        let mut input_pass: String = String::new();
+        println!("Enter username: ");
+        match io::stdin().read_line(&mut input_username) {
+            Ok(_) => {
+                println!("Enter password: ");
+                match io::stdin().read_line(&mut input_pass) {
+                    Ok(_) => {
+                        if username == input_username && pass == input_pass {
+                            Ok(())
+                        } else {
+                            Err(WrongData)
+                        }
+                    }
+                    Err(_) => Err(TerminalError),
+                }
+            }
+            Err(_) => Err(TerminalError),
+        }
+    }
+}
+
+pub fn sign_in(username: &mut String, pass: &mut String) -> Result<(), AppError> {
+    if !username.is_empty() && !pass.is_empty() {
+        Err(AlreadySigned)
+    } else {
+        println!("---Sign in--- ");
+        let mut input_username: String = String::new();
+        println!("Enter username: ");
+        match io::stdin().read_line(&mut input_username) {
+            Ok(_) => {
+                let mut option = None;
+                while option.is_none() {
+                    option = sign_in_password();
+                    if option.is_none() {
+                        println!("Passwords dont match, try again!\n");
+                    }
+                }
+                match option {
+                    Some(input_pass) => {
+                        *username = input_username;
+                        *pass = input_pass;
+                        Ok(())
+                    }
+                    None => Err(CriticalError),
+                }
+            }
+            Err(_) => Err(TerminalError),
+        }
+    }
+}
+
+pub fn sign_in_password() -> Option<String> {
+    let mut input_pass1: String = String::new();
+    let mut input_pass2: String = String::new();
+    println!("Enter password: ");
+    match io::stdin().read_line(&mut input_pass1) {
+        Ok(_) => {
+            println!("Confirm password: ");
+            match io::stdin().read_line(&mut input_pass2) {
+                Ok(_) => {
+                    if input_pass1 == input_pass2 {
+                        Some(input_pass1)
+                    } else {
+                        None
+                    }
+                }
+                Err(_) => None,
+            }
+        }
+        Err(_) => None,
+    }
+}
