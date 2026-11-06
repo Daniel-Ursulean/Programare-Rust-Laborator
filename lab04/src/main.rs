@@ -1,6 +1,6 @@
 use std::{
     fs::{self},
-    io,
+    io::{self},
 };
 
 use crate::MyErrors::{NotAscii, ReadError};
@@ -17,8 +17,8 @@ enum MyErrors {
 
 fn error_handler(er: MyErrors) {
     match er {
-        NotAscii => println!("Text contains not-ascii characters"),
-        ReadError => println!("Error at reading the file"),
+        NotAscii => println!("Error: Text contains not-ascii characters :|"),
+        ReadError => println!("Error: Was not able to read the file :(("),
     }
 }
 
@@ -37,13 +37,13 @@ fn p1(path: &'static str) {
                 max_chars = chars;
             }
         }
-        println!("Longest lines cosidering the number of bytes ({max_bytes} bytes):");
+        println!("-Longest lines considering the number of bytes ({max_bytes} bytes):");
         for l in s.lines() {
             if l.len() == max_bytes {
                 println!("{l}");
             }
         }
-        println!("Longest lines cosidering the number of bytes ({max_chars} characters):");
+        println!("-Longest lines considering the number of characters ({max_chars} characters):");
         for l in s.lines() {
             if l.chars().count() == max_chars {
                 println!("{l}");
@@ -77,7 +77,7 @@ fn p2(path: &'static str) {
                 }
                 Err(er) => {
                     error_handler(er);
-                    break;
+                    return;
                 }
             }
         }
@@ -106,11 +106,48 @@ fn p3(path: &'static str) {
     }
     println!("{final_string}");
 }
+
+fn p4() {
+    let r = read_from_file("C:\\Windows\\System32\\drivers\\etc\\hosts");
+    if let Ok(s) = r {
+        for line in s.lines() {
+            if line.starts_with('#') || line.is_empty() {
+                continue;
+            } else {
+                let mut w = line.split(' ');
+                if let Some(ip) = w.next()
+                    && let Some(hostname) = w.next()
+                {
+                    println!("{} => {}", hostname, ip);
+                }
+            }
+        }
+    } else {
+        error_handler(ReadError);
+    }
+}
 fn main() {
     println!("Problema 1");
-    p1("f1_in.txt");
+    println!("===================");
+    p1("p1_f1.txt"); //success
+    println!("===================");
+    p1("p1_f2.txt"); //success
+    println!("===================");
+    p1("missing.txt"); //fail
+
     println!("\n Problema 2");
-    p2("f2_in.txt");
+    println!("===================");
+    p2("p2_f1.txt"); //success
+    println!("===================");
+    p2("p2_f2.txt"); //success
+    println!("===================");
+    p2("p2_f3.txt"); //fail
     println!("\nProblema 3");
-    p3("f3_in.txt");
+    println!("===================");
+    p3("p3_f1.txt"); //success
+    println!("===================");
+    p3("p3_f2.txt"); //success
+    println!("\nProblema 4");
+    println!("===================");
+    p4();
 }
